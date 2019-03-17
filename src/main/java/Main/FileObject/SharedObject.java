@@ -8,6 +8,7 @@ public class SharedObject<T> {
      * Synced Object
      */
     protected T ObVal;
+
     public SharedObject(){
 
     }
@@ -24,6 +25,7 @@ public class SharedObject<T> {
         return  value;
 
     }
+
     protected void update(T val){
         ObVal = val;
     }

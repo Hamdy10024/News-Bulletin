@@ -1,37 +1,92 @@
 package Main.Server;
 
+import Main.FileObject.SharedInt;
 import Main.FileObject.SharedLog;
+import Main.FileObject.SharedObject;
 
-public class ClientHandler {
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Properties;
+import java.util.Random;
+
+public class ClientHandler extends Thread {
     private SharedLog readLog;
     private  SharedLog writeLog;
-
-    //TODO: set parameters to include client socket/data to connect and sseq and request type
+    private DataInputStream inputStream;
+    private DataOutputStream outputStream;
+    private SharedObject<Integer> object;
+    private SharedInt readers;
+    private Socket conn;
+    private  Integer sSeq;
+    private Integer id;
+    private boolean isread;
 
     /**
      * Constructor for client handler
      * Terminates when request is handled.
      */
-    public ClientHandler(){
+    public ClientHandler(Properties props, Socket connection,SharedObject<Integer> o,
+                         SharedInt readers) throws IOException {
+
         readLog = new SharedLog("sSeq oVal rID rNum");
         writeLog = new SharedLog("sSeq oVal wID");
-        handle();
-    }
+        inputStream = new DataInputStream(connection.getInputStream());
+        outputStream = new DataOutputStream(connection.getOutputStream());
+        object = o;
+        conn = connection;
+        this.readers = readers;
+        sSeq = Integer.valueOf(props.getProperty("sSeq"));
+        id = Integer.valueOf(props.getProperty("id"));
+        isread = false;
 
+    }
     /**
      * Handles client request by accepting connection,
      * parsing input from connection and updating object.
      */
-    private void handle() {
-        // TODO:some code
-        terminate();
+    public void run(){
+        System.out.println("thread is running...");
+        try {
+            while (conn.isConnected()) {
+//                if (inputStream.available() < 4)
+//                    continue;
+//                if (!conn.isConnected())
+//                    terminate();
+                Integer request = inputStream.readInt();
+                System.out.println("request is "+request);
+                if (request == -1)
+                    handleRead();
+                else
+                    handleWrite(request);
+                break;
+            }
+            terminate();
+        }catch (IOException e) {
+            //terminate();
+        }
     }
+
 
     /**
      * Handles read requests
      */
-    private void handleRead(){
-        //TODO
+    private void handleRead() throws IOException {
+        int reader = readers.Increment();
+
+        Integer obVal = object.read();
+        Random rand =  new Random();
+        try {
+            Thread.sleep(rand.nextInt(10000));
+        } catch(InterruptedException e) {
+            // DO nothing
+        }
+        outputStream.write(obVal);
+        readLog.write(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader);
+        System.out.println(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader);
+        isread = true;
+
     }
 
     /**
@@ -39,16 +94,25 @@ public class ClientHandler {
      * @param val
      */
     private void handleWrite(Integer val){
-        //TODO
+        object.write(val);
+        writeLog.write(sSeq + "\t"+val+"\t"+id);
+        System.out.println(sSeq + "\t"+val+"\t"+id);
     }
 
     /**
      * Calls termination after request is satisfied.
      * Should write in Log depending on type and close connection
      */
-    private void terminate() {
-        // TODO:write in log
+    private void terminate() throws IOException {
+        System.out.println("terminating");
+
+        if(isread)
+            readers.Decrement();
+        if(conn.isConnected())
+            conn.close();
+
 
     }
 
 }
+
