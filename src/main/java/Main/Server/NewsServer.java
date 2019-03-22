@@ -1,6 +1,5 @@
 package Main.Server;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 
@@ -25,10 +24,22 @@ public class NewsServer implements Runnable {
 
 	@Override
 	public void run() {
-		ServerSocket server_socket = new ServerSocket(Integer.parseInt(port_number));
+		ServerSocket server_socket = null;
+		try {
+			server_socket = new ServerSocket(Integer.parseInt(port_number));
+		} catch (NumberFormatException | IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		int clients = num_readers + num_writers;
 		for (int i = 0; i < clients; i++) {
-			ClientHandler h = new ClientHandler(server_socket.accept(), object, readers);
+			ClientHandler h = null;
+			try {
+				h = new ClientHandler(null, server_socket.accept(), object, null);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			h.start();
 		}
 	}
