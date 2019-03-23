@@ -1,46 +1,90 @@
 package Main.Server;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+import java.util.List;
+
+import Main.FileObject.SharedInt;
+import Main.FileObject.SharedLog;
 import Main.FileObject.SharedObject;
 
-public class NewsServer implements Runnable {
+public class NewsServer extends Thread {
 
 	private SharedObject<Integer> object;
+	private  SharedInt curReaders;
 	private String port_number;
 	private int num_readers, num_writers;
+	private SharedLog readLog,writeLog;
+	private Map<String,Integer> ids;
+    private int sseq = 0;
+    private int maxReqs;
+	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
+                      List<String> readers,List<String> writers,int reqs)  {
+		this.port_number = port_number;
+		num_readers = readerNum;
+		num_writers = writerNum;
+		readLog = new SharedLog("sSeq oVal rID rNum\n");
+		writeLog = new SharedLog("sSeq oVal wID\n");
+		object = new SharedInt();
+		curReaders = new SharedInt(0);
+		ids = new HashMap<>();
+		for(int i = 0 ;i<readerNum;i++)
+		    ids.put(readers.get(i),i+1);
+        for(int i = 0 ;i<writerNum;i++)
+            ids.put(writers.get(i),i+1+readerNum);
+		maxReqs = reqs * (readerNum+writerNum);
 
-	public NewsServer(String[] args) throws IOException {
-		port_number = args[0];
-		num_readers = Integer.parseInt(args[1]);
-		num_writers = Integer.parseInt(args[2]);
-		if (args.length > 2) {
-			object = new SharedObject<Integer>(Integer.parseInt(args[3]));
-		} else {
-			object = new SharedObject<Integer>();
-		}
+	}
+	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
+                      List<String> readers,List<String> writers,int reqs,Integer obj) {
+
+	    this(port_number,readerNum,writerNum,readers,writers,reqs);
+        object = new SharedInt(obj);
+
 	}
 
+	private void runServer() throws IOException, InterruptedException {
+		ServerSocket server_socket ;
+        sseq = 0;
+		server_socket = new ServerSocket(Integer.parseInt(port_number));
+		List<Thread> handlers = new ArrayList<>();
+        while (sseq < maxReqs) {
+            Socket client = server_socket.accept();
+            System.out.println("Next request "+client.getInetAddress().toString());
+
+            ClientHandler handler = new ClientHandler(++sseq,ids.get(client.getInetAddress().toString()),
+                    client,object,curReaders);
+            handlers.add(handler);
+            handler.start();
+        }
+        for(Thread handler:handlers) {
+            handler.join();
+        }
+	}
+	private  void exportReport() throws IOException {
+        FileWriter fw = new FileWriter("server.log");
+
+        fw.write(readLog.exportLog());
+        fw.write(writeLog.exportLog());
+        fw.close();
+
+    }
 	@Override
 	public void run() {
-		ServerSocket server_socket = null;
 		try {
-			server_socket = new ServerSocket(Integer.parseInt(port_number));
-		} catch (NumberFormatException | IOException e) {
-			// TODO Auto-generated catch block
+			runServer();
+		} catch (IOException e)
+		{
+			//
 			e.printStackTrace();
-		}
-		int clients = num_readers + num_writers;
-		for (int i = 0; i < clients; i++) {
-			ClientHandler h = null;
-			try {
-				h = new ClientHandler(null, server_socket.accept(), object, null);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			h.start();
-		}
-	}
+		} catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -27,7 +27,7 @@ public class ClientHandler extends Thread {
      * Constructor for client handler
      * Terminates when request is handled.
      */
-    public ClientHandler(Properties props, Socket connection,SharedObject<Integer> o,
+    public ClientHandler(Integer sseq,Integer id, Socket connection,SharedObject<Integer> o,
                          SharedInt readers) throws IOException {
 
         readLog = new SharedLog("sSeq oVal rID rNum");
@@ -37,8 +37,8 @@ public class ClientHandler extends Thread {
         object = o;
         conn = connection;
         this.readers = readers;
-        sSeq = Integer.valueOf(props.getProperty("sSeq"));
-        id = Integer.valueOf(props.getProperty("id"));
+        sSeq = sseq;
+        this.id = id;
         isread = false;
 
     }
@@ -55,6 +55,7 @@ public class ClientHandler extends Thread {
 //                if (!conn.isConnected())
 //                    terminate();
                 Integer request = inputStream.readInt();
+                request -= 808464437; //TODO remove this
                 System.out.println("request is "+request);
                 if (request == -1)
                     handleRead();
@@ -83,8 +84,8 @@ public class ClientHandler extends Thread {
             // DO nothing
         }
         outputStream.write(obVal);
-        readLog.write(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader);
-        System.out.println(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader);
+        readLog.write(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
+        System.out.println(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
         isread = true;
 
     }
@@ -95,7 +96,7 @@ public class ClientHandler extends Thread {
      */
     private void handleWrite(Integer val){
         object.write(val);
-        writeLog.write(sSeq + "\t"+val+"\t"+id);
+        writeLog.write(sSeq + "\t"+val+"\t"+id+"\n");
         System.out.println(sSeq + "\t"+val+"\t"+id);
     }
 
