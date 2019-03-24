@@ -1,6 +1,7 @@
 package Main.Client;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,6 +68,7 @@ public abstract class GenericClient  {
     public  boolean log(String file, String line){
         Path path = Paths.get(file);
         try {
+
             Files.write(path, line.getBytes());
         } catch (IOException e) {
             e.printStackTrace();

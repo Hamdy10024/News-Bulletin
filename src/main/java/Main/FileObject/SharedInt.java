@@ -4,6 +4,7 @@ public class SharedInt extends SharedObject<Integer> {
 
     public SharedInt() {
         super();
+        ObVal = -1;
     }
     public SharedInt(Integer a) {
         super(a);

@@ -24,6 +24,7 @@ public class NewsServer extends Thread {
 	private Map<String,Integer> ids;
     private int sseq = 0;
     private int maxReqs;
+    private ClientBuilder builder ;
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
                       List<String> readers,List<String> writers,int reqs)  {
 		this.port_number = port_number;
@@ -39,6 +40,11 @@ public class NewsServer extends Thread {
         for(int i = 0 ;i<writerNum;i++)
             ids.put(writers.get(i),i+1+readerNum);
 		maxReqs = reqs * (readerNum+writerNum);
+		builder = new ClientBuilder();
+		builder.o=object;
+		builder.readers = curReaders;
+		builder.readLog = readLog;
+		builder.writeLog = writeLog;
 
 	}
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
@@ -57,9 +63,10 @@ public class NewsServer extends Thread {
         while (sseq < maxReqs) {
             Socket client = server_socket.accept();
             System.out.println("Next request "+client.getInetAddress().toString());
-
-            ClientHandler handler = new ClientHandler(++sseq,ids.get(client.getInetAddress().toString()),
-                    client,object,curReaders);
+			builder.id =  ids.get(client.getInetAddress());;
+			builder.sseq = ++sseq;
+			builder.connection = client;
+            ClientHandler handler = builder.get();
             handlers.add(handler);
             handler.start();
         }

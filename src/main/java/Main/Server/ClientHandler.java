@@ -28,10 +28,10 @@ public class ClientHandler extends Thread {
      * Terminates when request is handled.
      */
     public ClientHandler(Integer sseq,Integer id, Socket connection,SharedObject<Integer> o,
-                         SharedInt readers) throws IOException {
+                         SharedInt readers,SharedLog readLog,SharedLog writeLog) throws IOException {
 
-        readLog = new SharedLog("sSeq oVal rID rNum");
-        writeLog = new SharedLog("sSeq oVal wID");
+        this.readLog =readLog;
+        this.writeLog = writeLog;
         inputStream = new DataInputStream(connection.getInputStream());
         outputStream = new DataOutputStream(connection.getOutputStream());
         object = o;
@@ -55,7 +55,9 @@ public class ClientHandler extends Thread {
 //                if (!conn.isConnected())
 //                    terminate();
                 Integer request = inputStream.readInt();
+                id = inputStream.readInt();
                 request -= 808464437; //TODO remove this
+                id -= 808464437; //TODO remove this
                 System.out.println("request is "+request);
                 if (request == -1)
                     handleRead();
@@ -83,7 +85,7 @@ public class ClientHandler extends Thread {
         } catch(InterruptedException e) {
             // DO nothing
         }
-        outputStream.write(obVal);
+        outputStream.writeInt(obVal);
         readLog.write(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
         System.out.println(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
         isread = true;
