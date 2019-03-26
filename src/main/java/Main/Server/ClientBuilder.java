@@ -12,8 +12,7 @@ public class ClientBuilder {
 
     @Setter
     Integer sseq;
-    @Setter
-    Integer id;
+
     @Setter
     Socket connection;
     @Setter
@@ -25,7 +24,7 @@ public class ClientBuilder {
     @Setter
     SharedLog writeLog;
     ClientHandler get() throws IOException {
-        return new ClientHandler(sseq,id,connection,o,readers,readLog,writeLog);
+        return new ClientHandler(sseq,connection,o,readers,readLog,writeLog);
     }
 
 

@@ -26,8 +26,7 @@ public class Start {
 		builder.setNumWriters(parser.getNumWriters());
 		builder.setMaxReqs(parser.getRequests());
 
-		builder.setWriters(parser.getWriters());
-		builder.setReaders(parser.getReaders());
+
 
 		NewsServer server = builder.getServer();
 		server.start();

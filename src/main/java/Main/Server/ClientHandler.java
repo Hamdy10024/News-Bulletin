@@ -8,8 +8,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Properties;
-import java.util.Random;
 
 public class ClientHandler extends Thread {
     private SharedLog readLog;
@@ -19,7 +17,7 @@ public class ClientHandler extends Thread {
     private SharedObject<Integer> object;
     private SharedInt readers;
     private Socket conn;
-    private  Integer sSeq;
+    private  Integer rSeq,sSeq;
     private Integer id;
     private boolean isread;
 
@@ -27,7 +25,7 @@ public class ClientHandler extends Thread {
      * Constructor for client handler
      * Terminates when request is handled.
      */
-    public ClientHandler(Integer sseq,Integer id, Socket connection,SharedObject<Integer> o,
+    public ClientHandler(Integer sseq, Socket connection,SharedObject<Integer> o,
                          SharedInt readers,SharedLog readLog,SharedLog writeLog) throws IOException {
 
         this.readLog =readLog;
@@ -37,8 +35,8 @@ public class ClientHandler extends Thread {
         object = o;
         conn = connection;
         this.readers = readers;
-        sSeq = sseq;
-        this.id = id;
+        rSeq = sseq;
+        sSeq = 0;
         isread = false;
 
     }
@@ -55,14 +53,15 @@ public class ClientHandler extends Thread {
 //                if (!conn.isConnected())
 //                    terminate();
                 Integer request = inputStream.readInt();
+                int news = inputStream.readInt();
                 id = inputStream.readInt();
-                request -= 808464437; //TODO remove this
-                id -= 808464437; //TODO remove this
-                System.out.println("request is "+request);
+            //    request -= 808464437; //TODO remove this
+             //   id -= 808464437; //TODO remove this
+                System.out.println("request is "+request + " from "+id);
                 if (request == -1)
                     handleRead();
                 else
-                    handleWrite(request);
+                    handleWrite(news);
                 break;
             }
             terminate();
@@ -79,12 +78,15 @@ public class ClientHandler extends Thread {
         int reader = readers.Increment();
 
         Integer obVal = object.read();
-        Random rand =  new Random();
-        try {
-            Thread.sleep(rand.nextInt(10000));
-        } catch(InterruptedException e) {
-            // DO nothing
-        }
+       // Random rand =  new Random();
+//        try {
+//            Thread.sleep(rand.nextInt(10000));
+//        } catch(InterruptedException e) {
+//            // DO nothing
+//        }
+         sSeq = object.getsseq();
+        outputStream.writeInt(rSeq);
+        outputStream.writeInt(sSeq);
         outputStream.writeInt(obVal);
         readLog.write(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
         System.out.println(sSeq+"\t"+obVal+"\t"+id+ "\t"+reader+"\n");
@@ -96,8 +98,11 @@ public class ClientHandler extends Thread {
      * Handles Write requests
      * @param val
      */
-    private void handleWrite(Integer val){
+    private void handleWrite(Integer val) throws IOException {
         object.write(val);
+        sSeq = object.getsseq();
+        outputStream.writeInt(rSeq);
+        outputStream.writeInt(sSeq);
         writeLog.write(sSeq + "\t"+val+"\t"+id+"\n");
         System.out.println(sSeq + "\t"+val+"\t"+id);
     }

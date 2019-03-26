@@ -1,12 +1,9 @@
 package Main.Server;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import java.util.List;
 
@@ -21,24 +18,19 @@ public class NewsServer extends Thread {
 	private String port_number;
 	private int num_readers, num_writers;
 	private SharedLog readLog,writeLog;
-	private Map<String,Integer> ids;
     private int sseq = 0;
     private int maxReqs;
     private ClientBuilder builder ;
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
-                      List<String> readers,List<String> writers,int reqs)  {
+                      int reqs)  {
 		this.port_number = port_number;
 		num_readers = readerNum;
 		num_writers = writerNum;
-		readLog = new SharedLog("sSeq oVal rID rNum\n");
-		writeLog = new SharedLog("sSeq oVal wID\n");
+		readLog = new SharedLog("sSeq\toVal\trID\trNum\n","readers.log");
+		writeLog = new SharedLog("sSeq\toVal\twID\n","writers.log");
 		object = new SharedInt();
 		curReaders = new SharedInt(0);
-		ids = new HashMap<>();
-		for(int i = 0 ;i<readerNum;i++)
-		    ids.put(readers.get(i),i+1);
-        for(int i = 0 ;i<writerNum;i++)
-            ids.put(writers.get(i),i+1+readerNum);
+
 		maxReqs = reqs * (readerNum+writerNum);
 		builder = new ClientBuilder();
 		builder.o=object;
@@ -48,9 +40,9 @@ public class NewsServer extends Thread {
 
 	}
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
-                      List<String> readers,List<String> writers,int reqs,Integer obj) {
+                      int reqs,Integer obj) {
 
-	    this(port_number,readerNum,writerNum,readers,writers,reqs);
+	    this(port_number,readerNum,writerNum,reqs);
         object = new SharedInt(obj);
 
 	}
@@ -62,8 +54,6 @@ public class NewsServer extends Thread {
 		List<Thread> handlers = new ArrayList<>();
         while (sseq < maxReqs) {
             Socket client = server_socket.accept();
-            System.out.println("Next request "+client.getInetAddress().toString());
-			builder.id =  ids.get(client.getInetAddress());;
 			builder.sseq = ++sseq;
 			builder.connection = client;
             ClientHandler handler = builder.get();
@@ -73,13 +63,16 @@ public class NewsServer extends Thread {
         for(Thread handler:handlers) {
             handler.join();
         }
+        exportReport();
 	}
 	private  void exportReport() throws IOException {
-        FileWriter fw = new FileWriter("server.log");
-
-        fw.write(readLog.exportLog());
-        fw.write(writeLog.exportLog());
-        fw.close();
+//        FileWriter fw = new FileWriter("server.log");
+//
+//        fw.write(readLog.exportLog());
+//        fw.write(writeLog.exportLog());
+//        fw.close();
+		readLog.exportLog();
+		writeLog.exportLog();
 
     }
 	@Override

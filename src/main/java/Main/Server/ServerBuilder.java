@@ -18,20 +18,17 @@ public class ServerBuilder {
     private int numWriters;
     @Setter
     private int maxReqs;
-    @Setter
-    private  List<String> readers;
-    @Setter
-    private List<String>writers;
+
 
     public ServerBuilder() {
     }
 
     public NewsServer getServer() {
-        return new NewsServer(portNumber,numReaders,numWriters,readers,writers,maxReqs);
+        return new NewsServer(portNumber,numReaders,numWriters,maxReqs);
 
     }
     public NewsServer getServer(int init) {
-        return new NewsServer(portNumber,numReaders,numWriters,readers,writers,maxReqs,init);
+        return new NewsServer(portNumber,numReaders,numWriters,maxReqs,init);
 
     }
 }
