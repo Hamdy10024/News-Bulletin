@@ -4,6 +4,8 @@ import Main.FileObject.SharedInt;
 import Main.FileObject.SharedLog;
 import Main.FileObject.SharedObject;
 import lombok.Setter;
+
+import java.rmi.RemoteException;
 import java.util.List;
 
 public class ServerBuilder {
@@ -23,11 +25,11 @@ public class ServerBuilder {
     public ServerBuilder() {
     }
 
-    public NewsServer getServer() {
+    public NewsServer getServer() throws RemoteException {
         return new NewsServer(portNumber,numReaders,numWriters,maxReqs);
 
     }
-    public NewsServer getServer(int init) {
+    public NewsServer getServer(int init) throws RemoteException {
         return new NewsServer(portNumber,numReaders,numWriters,maxReqs,init);
 
     }

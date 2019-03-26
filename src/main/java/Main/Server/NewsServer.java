@@ -3,6 +3,9 @@ package Main.Server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 
 import java.util.List;
@@ -10,8 +13,10 @@ import java.util.List;
 import Main.FileObject.SharedInt;
 import Main.FileObject.SharedLog;
 import Main.FileObject.SharedObject;
+import Main.RMI.RemoteServer;
 
-public class NewsServer extends Thread {
+public class NewsServer  extends UnicastRemoteObject implements RemoteServer,Runnable  {
+    private static final long serialVersionUID = 1L;
 
 	private SharedObject<Integer> object;
 	private  SharedInt curReaders;
@@ -22,7 +27,8 @@ public class NewsServer extends Thread {
     private int maxReqs;
     private ClientBuilder builder ;
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
-                      int reqs)  {
+                      int reqs) throws RemoteException {
+		super();
 		this.port_number = port_number;
 		num_readers = readerNum;
 		num_writers = writerNum;
@@ -40,7 +46,7 @@ public class NewsServer extends Thread {
 
 	}
 	public NewsServer(String port_number,Integer readerNum,Integer writerNum,
-                      int reqs,Integer obj) {
+                      int reqs,Integer obj) throws RemoteException {
 
 	    this(port_number,readerNum,writerNum,reqs);
         object = new SharedInt(obj);
@@ -87,4 +93,36 @@ public class NewsServer extends Thread {
             e.printStackTrace();
         }
     }
+
+	@Override
+	public Integer[] readData(Integer id) throws RemoteException {
+        System.out.println(id + " is trying to contact!");
+        int seq;
+        synchronized (this) {
+             seq = ++sseq;
+        }
+        Integer []out =  new Integer[3];
+        out[0] = seq;
+        out[2] = object.read();
+        out[1] = object.getsseq();
+
+
+		return out;
+	}
+
+	@Override
+	public Integer[] writeData(Integer id, Integer data) throws RemoteException {
+        System.out.println(id + " is trying to contact!");
+        int seq;
+        synchronized (this) {
+            seq = ++sseq;
+        }
+        Integer []out =  new Integer[2];
+        out[0] = seq;
+        object.write(data);
+        out[1] = object.getsseq();
+
+
+        return out;
+	}
 }
