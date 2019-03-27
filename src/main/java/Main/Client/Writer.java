@@ -14,6 +14,14 @@ public class Writer extends Client {
     private Integer newsID;
     public Writer(Integer id) {
         super(id);
+        try {
+            fstream = new FileWriter(file);
+            String line = "rseq\tsseq\n";
+            fstream.write(line);
+            //fstream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     private int rseq,sseq;
     @Override
@@ -43,14 +51,15 @@ public class Writer extends Client {
 
     @Override
     protected boolean log() {
-        Path path = Paths.get(file);
         String line = rseq+"\t"+sseq+"\n";
         try {
 
-            Files.write(path, line.getBytes());
+            fstream.write(line);
+            System.out.println(line);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
-        return true;    }
+        return true;
+    }
 }

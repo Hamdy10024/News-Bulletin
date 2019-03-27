@@ -1,8 +1,11 @@
 package Main.Server;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -98,15 +101,23 @@ public class NewsServer  extends UnicastRemoteObject implements RemoteServer,Run
 	public Integer[] readData(Integer id) throws RemoteException {
         System.out.println(id + " is trying to contact!");
         int seq;
+        curReaders.Increment();
         synchronized (this) {
              seq = ++sseq;
         }
         Integer []out =  new Integer[3];
         out[0] = seq;
+        int readers = curReaders.read();
+
         out[2] = object.read();
+
         out[1] = object.getsseq();
 
-
+        String line = out[0]+"\t"+out[2]+"\t"+id+"\t"+readers+"\n";
+        curReaders.Decrement();
+        System.out.println(line);
+        readLog.write(line);
+        unbindRMI();
 		return out;
 	}
 
@@ -121,8 +132,27 @@ public class NewsServer  extends UnicastRemoteObject implements RemoteServer,Run
         out[0] = seq;
         object.write(data);
         out[1] = object.getsseq();
-
+        String line = out[0]+"\t"+data+"\t"+id+"\n";
+        System.out.println(line);
+        readLog.write(line);
+        unbindRMI();
 
         return out;
 	}
+
+	private void unbindRMI() throws RemoteException {
+        if(sseq >=maxReqs) {
+            try {
+                Naming.unbind("//localhost/MyServer");
+                System.out.println("unbinding");
+                exportReport();
+            } catch (NotBoundException e) {
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

@@ -1,10 +1,9 @@
 package Main;
 
-import Main.Client.Client;
-import Main.Client.Reader;
-import Main.Client.Writer;
+import Main.Client.*;
 import Main.RMI.RemoteServer;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -14,33 +13,30 @@ public class startClient {
 
     private static RemoteServer look_up;
 
-    public static void main(String []args) throws RemoteException, NotBoundException, MalformedURLException {
-//        if(args.length < 5) // prog read/write id nreqs ip port
-//
-//        {
-//            System.out.println(args.length);
-//            return;
-//        }
-//        Client client;
-//
-//        if(args[0].equals("Reader")) {
-//            // run reader client
-//            int id = Integer.valueOf(args[1]);
-//             client= new Reader(id);
-//        }
-//        else
-//        {
-//            // run writer client
-//            int id = Integer.valueOf(args[1]);
-//             client = new Writer(id);
-//        }
-//        int port = Integer.valueOf(args[4]);
-//        client.setServer(args[3],port);
-//        int reqs = Integer.valueOf(args[2]);
-//        for(int i=0;i<reqs;i++)
-//            client.request();
-        look_up = (RemoteServer) Naming.lookup("//localhost/MyServer");
-        Integer []res = look_up.readData(1);
-        System.out.println(res[0]);
+    public static void main(String []args) throws IOException, NotBoundException {
+        if(args.length < 6) // read/write  id nreqs ip port RMI/Socket
+
+        {
+            System.out.println(args.length);
+            return;
+        }
+        Client client;
+
+        int id = Integer.valueOf(args[1]);
+        if(args[0].equals("Reader") && !args[5].equals("RMI"))
+             client= new Reader(id);
+        else if (!args[0].equals("Reader") && !args[5].equals("RMI"))
+             client = new Writer(id);
+         else if(args[0].equals("Reader"))
+            client = new RemoteReader(id);
+         else
+             client = new RemoteWriter(id);
+        int port = Integer.valueOf(args[4]);
+        client.setServer(args[3],port);
+        int reqs = Integer.valueOf(args[2]);
+        for(int i=0;i<reqs;i++)
+            client.request();
+        client.close();
+
    }
 }

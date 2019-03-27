@@ -1,5 +1,7 @@
 package Main.FileObject;
 
+import java.util.Random;
+
 /**
  * Shared synchronizable Object
  */
@@ -19,9 +21,17 @@ public class SharedObject<T> {
 
     public T read(){
         T value;
+         Random rand =  new Random();
+        try {
+            Thread.sleep(rand.nextInt(10000));
+        } catch(InterruptedException e) {
+            // DO nothing
+        }
         synchronized (this) {
             value = ObVal;
+
             sseq ++;
+
         }
         return  value;
 
@@ -34,6 +44,12 @@ public class SharedObject<T> {
         ObVal = val;
     }
     public void write(T value) {
+        Random rand =  new Random();
+        try {
+            Thread.sleep(rand.nextInt(100));
+        } catch(InterruptedException e) {
+            // DO nothing
+        }
         synchronized (this) {
             this.update(value);
             sseq ++;

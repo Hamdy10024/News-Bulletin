@@ -31,9 +31,10 @@ public class Start {
 
 //
 		NewsServer server = builder.getServer();
-//		Thread serverThread = new Thread(server);
-//		serverThread.start();
+
+    	//Thread serverThread = new Thread(server);
+		//serverThread.start();
 		Naming.rebind("//localhost/MyServer",server);
-		//System.out.println(stdout);
+		System.out.println("help");
 	}
 }

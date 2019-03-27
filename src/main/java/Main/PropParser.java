@@ -39,5 +39,13 @@ public class PropParser {
         numWriters =  Integer.valueOf(props.getProperty("RW.numberOfWriters"));
 
         requests = Integer.valueOf(props.getProperty("RW.numberOfAccesses"));
+        for (int i = 0; i < numReaders; i++) {
+            readers.add(props.getProperty("RW.reader" + i));
+        }
+        System.out.println(readers.size());
+        for (int i = 0; i < numWriters; i++) {
+            writers.add(props.getProperty("RW.writer" + i));
+        }
+
     }
 }
